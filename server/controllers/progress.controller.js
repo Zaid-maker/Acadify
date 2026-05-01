@@ -32,7 +32,7 @@ export const getProgress = async (req, res) => {
         const progress = await Progress.find({
             user: userId,
             course: courseId,
-        });
+        }).sort({ createdAt: 1 });
 
         res.json(progress);
     } catch (error) {

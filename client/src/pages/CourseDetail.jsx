@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "../api/axios";
+import ProgressBar from "../components/ProgressBar";
 
 function CourseDetail() {
   const { id } = useParams();
@@ -13,6 +14,12 @@ function CourseDetail() {
   const [enrolling, setEnrolling] = useState(false);
   const [completedLectures, setCompletedLectures] = useState([]);
   const [savingProgress, setSavingProgress] = useState(false);
+  const [resumeMessage, setResumeMessage] = useState("");
+
+  const allLectures = useMemo(
+    () => (course?.sections || []).flatMap((section) => section.lectures || []),
+    [course],
+  );
 
   useEffect(() => {
     let ignore = false;
@@ -47,25 +54,6 @@ function CourseDetail() {
     let ignore = false;
 
     axios
-      .get(`/progress/${id}`)
-      .then((res) => {
-        if (!ignore) {
-          setCompletedLectures(
-            res.data.map((progress) => String(progress.lecture)),
-          );
-        }
-      })
-      .catch((err) => console.error(err));
-
-    return () => {
-      ignore = true;
-    };
-  }, [id]);
-
-  useEffect(() => {
-    let ignore = false;
-
-    axios
       .get("/enrollments/check", {
         params: { courseId: id },
       })
@@ -80,6 +68,43 @@ function CourseDetail() {
       ignore = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!course) return undefined;
+
+    let ignore = false;
+
+    axios
+      .get(`/progress/${id}`)
+      .then((res) => {
+        if (ignore) return;
+
+        const completed = res.data.map((progress) =>
+          String(progress.lecture),
+        );
+        const lastCompletedId = completed[completed.length - 1];
+        const lastCompletedIndex = allLectures.findIndex(
+          (lecture) => lecture._id === lastCompletedId,
+        );
+        const resumeLecture =
+          allLectures[lastCompletedIndex + 1] ||
+          allLectures[lastCompletedIndex];
+
+        setCompletedLectures(completed);
+
+        if (resumeLecture) {
+          setActiveLecture(resumeLecture);
+          setResumeMessage(`Continue with ${resumeLecture.title}`);
+        } else {
+          setResumeMessage("");
+        }
+      })
+      .catch((err) => console.error(err));
+
+    return () => {
+      ignore = true;
+    };
+  }, [id, course, allLectures]);
 
   const handleEnroll = async () => {
     try {
@@ -96,27 +121,53 @@ function CourseDetail() {
     }
   };
 
-  const handleComplete = async () => {
-    if (!activeLecture || completedLectures.includes(activeLecture._id)) return;
+  const playNextLecture = () => {
+    if (!activeLecture) return;
+
+    const currentIndex = allLectures.findIndex(
+      (lecture) => lecture._id === activeLecture._id,
+    );
+    const nextLecture = allLectures[currentIndex + 1];
+
+    if (nextLecture) {
+      setActiveLecture(nextLecture);
+      setResumeMessage(`Up next: ${nextLecture.title}`);
+    } else {
+      setResumeMessage("Course complete. Nice work.");
+    }
+  };
+
+  const markLectureComplete = async (lecture) => {
+    if (!lecture) return false;
+    if (completedLectures.includes(lecture._id)) return true;
 
     try {
       setSavingProgress(true);
 
       await axios.post("/progress", {
         courseId: id,
-        lectureId: activeLecture._id,
+        lectureId: lecture._id,
       });
 
       setCompletedLectures((current) =>
-        current.includes(activeLecture._id)
+        current.includes(lecture._id)
           ? current
-          : [...current, activeLecture._id],
+          : [...current, lecture._id],
       );
+      return true;
     } catch (err) {
       console.error(err.response?.data || err.message);
+      return false;
     } finally {
       setSavingProgress(false);
     }
+  };
+
+  const handleAutoComplete = async () => {
+    if (!activeLecture) return;
+
+    const saved = await markLectureComplete(activeLecture);
+    if (saved) playNextLecture();
   };
 
   const lectureCount = useMemo(
@@ -217,7 +268,7 @@ function CourseDetail() {
               <video
                 key={activeLecture._id}
                 controls
-                onEnded={handleComplete}
+                onEnded={handleAutoComplete}
                 className="aspect-video w-full bg-black"
               >
                 <source src={activeLecture.videoUrl} type="video/mp4" />
@@ -248,16 +299,23 @@ function CourseDetail() {
                 </h2>
                 <p className="mt-2 text-sm text-slate-500">
                   {enrolled
-                    ? `Progress: ${progressPercent}% complete`
+                    ? `${completedLectures.length} / ${lectureCount} lectures completed`
                     : "Enrollment unlocks lesson playback."}
                 </p>
+                {enrolled && resumeMessage && (
+                  <p className="mt-2 text-sm font-semibold text-cyan-700">
+                    {resumeMessage}
+                  </p>
+                )}
                 {enrolled && lectureCount > 0 && (
-                  <div className="mt-4 h-2 max-w-md overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className="h-full rounded-full bg-cyan-700 transition-all"
-                      style={{ width: `${progressPercent}%` }}
-                    />
+                  <div className="mt-4 max-w-md">
+                    <ProgressBar value={progressPercent} />
                   </div>
+                )}
+                {enrolled && progressPercent === 100 && (
+                  <p className="mt-3 text-sm font-bold text-emerald-700">
+                    Course completed.
+                  </p>
                 )}
               </div>
 
@@ -274,22 +332,11 @@ function CourseDetail() {
                   <span className="inline-flex rounded-md bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
                     Enrolled
                   </span>
-                  <button
-                    type="button"
-                    onClick={handleComplete}
-                    disabled={
-                      !activeLecture ||
-                      savingProgress ||
-                      completedLectures.includes(activeLecture._id)
-                    }
-                    className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {completedLectures.includes(activeLecture?._id)
-                      ? "Completed"
-                      : savingProgress
-                        ? "Saving..."
-                        : "Mark as Completed"}
-                  </button>
+                  {savingProgress && (
+                    <span className="text-sm font-semibold text-slate-500">
+                      Saving progress...
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -302,10 +349,10 @@ function CourseDetail() {
             <p className="mt-1 text-sm text-slate-500">
               {lectureCount} lectures across {course.sections?.length || 0} sections
             </p>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-cyan-700 transition-all"
-                style={{ width: `${progressPercent}%` }}
+            <div className="mt-4">
+              <ProgressBar
+                value={progressPercent}
+                label={`${completedLectures.length} / ${lectureCount} completed`}
               />
             </div>
           </div>
