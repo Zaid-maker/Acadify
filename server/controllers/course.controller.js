@@ -1,4 +1,5 @@
-import Course from "../models/Course.js";
+import Section from "../models/Section.js";
+import Lecture from "../models/Lecture.js";
 
 export const createCourse = async (req, res) => {
     try {
@@ -36,6 +37,42 @@ export const getCourseById = async (req, res) => {
         }
 
         res.json(course);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+export const getFullCourse = async (req, res) => {
+    try {
+        const courseId = req.params.id;
+
+        const course = await Course.findById(courseId);
+
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+
+        const sections = await Section.find({ course: courseId }).sort({ order: 1 });
+
+        const sectionsWithLectures = await Promise.all(
+            sections.map(async (section) => {
+                const lectures = await Lecture.find({
+                    section: section._id,
+                }).sort({ order: 1 });
+
+                return {
+                    ...section.toObject(),
+                    lectures,
+                };
+            })
+        );
+
+        res.json({
+            ...course.toObject(),
+            sections: sectionsWithLectures,
+        });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
