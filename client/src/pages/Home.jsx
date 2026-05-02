@@ -11,6 +11,12 @@ function Home() {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
   const [totalCourses, setTotalCourses] = useState(0);
+  const [filters, setFilters] = useState({
+    minPrice: "",
+    maxPrice: "",
+    minRating: "",
+    sort: "newest",
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,7 +25,14 @@ function Home() {
     setLoading(true);
 
     axios
-      .get(`/courses?page=${page}&limit=8&search=${encodeURIComponent(search)}`)
+      .get("/courses", {
+        params: {
+          page,
+          limit: 8,
+          search,
+          ...filters,
+        },
+      })
       .then((res) => {
         if (!ignore) {
           setCourses(res.data.data || []);
@@ -38,18 +51,12 @@ function Home() {
     return () => {
       ignore = true;
     };
-  }, [page, search]);
+  }, [page, search, filters]);
 
   const totalLessons = useMemo(
     () =>
       courses.reduce(
-        (total, course) =>
-          total +
-          (course.sections || []).reduce(
-            (sectionTotal, section) =>
-              sectionTotal + (section.lectures?.length || 0),
-            0,
-          ),
+        (total, course) => total + (course.lectureCount || 0),
         0,
       ),
     [courses],
@@ -145,19 +152,105 @@ function Home() {
         </div>
 
         <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <label className="block">
-            <span className="text-sm font-semibold text-slate-700">Search courses</span>
-            <input
-              type="search"
-              placeholder="Search courses by title, description, or category..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100"
-            />
-          </label>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Search courses</span>
+              <input
+                type="search"
+                placeholder="Search courses by title, description, or category..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Sort by</span>
+              <select
+                value={filters.sort}
+                onChange={(e) =>
+                  setFilters((current) => ({ ...current, sort: e.target.value }))
+                }
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100"
+              >
+                <option value="newest">Newest</option>
+                <option value="price_asc">Price: Low → High</option>
+                <option value="price_desc">Price: High → Low</option>
+                <option value="rating_desc">Top Rated</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Min price</span>
+              <input
+                placeholder="0"
+                type="number"
+                min="0"
+                value={filters.minPrice}
+                onChange={(e) => {
+                  setFilters((current) => ({ ...current, minPrice: e.target.value }));
+                  setPage(1);
+                }}
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Max price</span>
+              <input
+                placeholder="100000"
+                type="number"
+                min="0"
+                value={filters.maxPrice}
+                onChange={(e) => {
+                  setFilters((current) => ({ ...current, maxPrice: e.target.value }));
+                  setPage(1);
+                }}
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-slate-700">Minimum rating</span>
+              <select
+                value={filters.minRating}
+                onChange={(e) => {
+                  setFilters((current) => ({ ...current, minRating: e.target.value }));
+                  setPage(1);
+                }}
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100"
+              >
+                <option value="">All ratings</option>
+                <option value="4">4 stars & above</option>
+                <option value="3">3 stars & above</option>
+                <option value="2">2 stars & above</option>
+              </select>
+            </label>
+
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                  setFilters({
+                    minPrice: "",
+                    maxPrice: "",
+                    minRating: "",
+                    sort: "newest",
+                  });
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700"
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
         </div>
 
         {loading && (
@@ -213,8 +306,12 @@ function Home() {
                     {course.description || "Course details will be added soon."}
                   </p>
 
+                  <p className="mt-4 text-sm font-semibold text-amber-600">
+                    ⭐ {Number(course.avgRating || 0).toFixed(1)} ({course.reviewCount || 0})
+                  </p>
+
                   <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500">
-                    <span>{course.sections?.length || 0} sections</span>
+                    <span>{course.sectionCount || 0} sections</span>
                     <span className="font-semibold text-slate-700">
                       View curriculum
                     </span>

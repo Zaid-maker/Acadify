@@ -18,23 +18,119 @@ export const createCourse = async (req, res) => {
 export const getAllCourses = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || 8;
         const search = (req.query.search || "").trim();
+        const minPrice = parseInt(req.query.minPrice) || 0;
+        const maxPrice = parseInt(req.query.maxPrice) || 100000;
+        const minRating = parseFloat(req.query.minRating) || 0;
+        const sort = req.query.sort || "newest";
 
         const skip = (page - 1) * limit;
 
-        const query = {
+        const match = {
             published: true,
+            price: { $gte: minPrice, $lte: maxPrice },
             ...(search ? { $text: { $search: search } } : {}),
         };
 
-        const total = await Course.countDocuments(query);
+        let sortOption = { createdAt: -1 };
+        if (sort === "price_asc") sortOption = { price: 1, createdAt: -1 };
+        if (sort === "price_desc") sortOption = { price: -1, createdAt: -1 };
+        if (sort === "rating_desc") sortOption = { avgRating: -1, createdAt: -1 };
 
-        const courses = await Course.find(query)
-            .populate("instructor", "name email")
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
+        const pipeline = [
+            { $match: match },
+            {
+                $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "course",
+                    as: "reviews",
+                },
+            },
+            {
+                $addFields: {
+                    avgRating: { $ifNull: [{ $avg: "$reviews.rating" }, 0] },
+                    reviewCount: { $size: "$reviews" },
+                },
+            },
+            {
+                $lookup: {
+                    from: "sections",
+                    localField: "_id",
+                    foreignField: "course",
+                    as: "sections",
+                },
+            },
+            {
+                $lookup: {
+                    from: "lectures",
+                    localField: "sections._id",
+                    foreignField: "section",
+                    as: "lectures",
+                },
+            },
+            {
+                $addFields: {
+                    sectionCount: { $size: "$sections" },
+                    lectureCount: { $size: "$lectures" },
+                },
+            },
+            {
+                $match: {
+                    avgRating: { $gte: minRating },
+                },
+            },
+            { $sort: sortOption },
+            { $skip: skip },
+            { $limit: limit },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "instructor",
+                    foreignField: "_id",
+                    as: "instructor",
+                },
+            },
+            {
+                $addFields: {
+                    instructor: { $arrayElemAt: ["$instructor", 0] },
+                },
+            },
+            {
+                $project: {
+                    reviews: 0,
+                    sections: 0,
+                    lectures: 0,
+                },
+            },
+        ];
+
+        const totalAgg = await Course.aggregate([
+            { $match: match },
+            {
+                $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "course",
+                    as: "reviews",
+                },
+            },
+            {
+                $addFields: {
+                    avgRating: { $ifNull: [{ $avg: "$reviews.rating" }, 0] },
+                },
+            },
+            {
+                $match: {
+                    avgRating: { $gte: minRating },
+                },
+            },
+            { $count: "total" },
+        ]);
+
+        const courses = await Course.aggregate(pipeline);
+        const total = totalAgg[0]?.total || 0;
 
         res.json({
             data: courses,
