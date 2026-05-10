@@ -2,12 +2,13 @@ import Lecture from "../models/Lecture.js";
 
 export const createLecture = async (req, res) => {
     try {
-        const { title, sectionId, videoUrl } = req.body;
+        const { title, sectionId, videoUrl, description } = req.body;
 
         const lecture = await Lecture.create({
             title,
             section: sectionId,
             videoUrl,
+            description,
             order: 0,
         });
 

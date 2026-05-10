@@ -10,7 +10,9 @@ import {
   CheckCircle,
   Layout,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Star,
+  Quote
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -153,6 +155,57 @@ export default function LandingPage() {
             </div>
             <div className="text-blue-400 font-bold uppercase tracking-widest text-sm">Courses</div>
           </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-24 container mx-auto px-6 overflow-hidden">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+          <div className="max-w-2xl">
+            <h2 className="text-3xl md:text-5xl font-black text-gray-950 dark:text-white mb-4">Trusted by over 50,000+ students worldwide</h2>
+            <p className="text-gray-500 dark:text-gray-400">Discover how Acadify is helping learners achieve their goals through high-quality video courses and interactive learning.</p>
+          </div>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((_, i) => (
+              <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+            ))}
+            <span className="ml-2 font-bold text-gray-950 dark:text-white">4.9/5 Rating</span>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              name: "Sarah Jenkins",
+              role: "Full Stack Developer",
+              image: "https://i.pravatar.cc/150?u=sarah",
+              text: "The quality of the instructors on Acadify is unmatched. I transitioned from marketing to software engineering in 6 months thanks to their structured curriculum."
+            },
+            {
+              name: "David Chen",
+              role: "UI/UX Designer",
+              image: "https://i.pravatar.cc/150?u=david",
+              text: "Acadify's dashboard is so clean and intuitive. I've tried many LMS platforms, but this one actually keeps me motivated to complete my courses."
+            },
+            {
+              name: "Elena Rodriguez",
+              role: "Data Scientist",
+              image: "https://i.pravatar.cc/150?u=elena",
+              text: "The integration with Google Calendar and the ability to track my progress in real-time has made balancing work and learning so much easier."
+            }
+          ].map((testimonial, i) => (
+            <div key={i} className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-500/5 relative group transition-all hover:-translate-y-2">
+              <Quote className="absolute top-8 right-8 w-12 h-12 text-blue-500/10 group-hover:text-blue-500/20 transition-colors" />
+              <div className="flex items-center gap-4 mb-6">
+                <img src={testimonial.image} alt={testimonial.name} className="w-14 h-14 rounded-2xl object-cover ring-4 ring-blue-50 dark:ring-blue-900/20" />
+                <div>
+                  <h4 className="font-bold text-gray-950 dark:text-white">{testimonial.name}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{testimonial.role}</p>
+                </div>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed italic">"{testimonial.text}"</p>
+            </div>
+          ))}
         </div>
       </section>
 

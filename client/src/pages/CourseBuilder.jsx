@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import ReactQuill from "react-quill-new";
 import axios from "../api/axios";
 
 const isYouTubeUrl = (url = "") =>
@@ -8,6 +9,7 @@ const isYouTubeUrl = (url = "") =>
 const initialLectureData = {
   title: "",
   videoUrl: "",
+  description: "",
   sectionId: "",
 };
 
@@ -116,7 +118,7 @@ function CourseBuilder() {
   const handleAddLecture = async (e) => {
     e.preventDefault();
 
-    const { title, videoUrl, sectionId } = lectureData;
+    const { title, videoUrl, description, sectionId } = lectureData;
     if (!title.trim() || !videoUrl.trim() || !sectionId) return;
 
     try {
@@ -127,10 +129,11 @@ function CourseBuilder() {
       await axios.post("/lectures", {
         title,
         videoUrl,
+        description,
         sectionId,
       });
 
-      setLectureData({ title: "", videoUrl: "", sectionId });
+      setLectureData({ title: "", videoUrl: "", description: "", sectionId });
       setStatus("Lecture added.");
       await fetchCourse({ silent: true });
     } catch (err) {
@@ -353,6 +356,25 @@ function CourseBuilder() {
               <span className="mt-2 block text-xs text-slate-400 dark:text-gray-500">
                 Supports YouTube links and direct MP4 URLs.
               </span>
+            </label>
+
+            <label className="mt-4 block">
+              <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
+                Lecture Description
+              </span>
+              <div className="mt-2 flex flex-col">
+                <ReactQuill
+                  theme="snow"
+                  value={lectureData.description}
+                  onChange={(val) => {
+                    setLectureData({ ...lectureData, description: val });
+                    setError("");
+                    setStatus("");
+                  }}
+                  placeholder="Tell students what this lecture covers"
+                  className="h-32 overflow-hidden rounded-md border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-sm text-slate-950 dark:text-white"
+                />
+              </div>
             </label>
 
             <button

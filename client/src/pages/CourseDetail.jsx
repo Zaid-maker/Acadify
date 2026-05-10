@@ -377,9 +377,13 @@ function CourseDetail() {
               <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl dark:text-white">
                 {course.title}
               </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 dark:text-gray-400">
-                {course.description || "Work through this course one lecture at a time."}
-              </p>
+              <div
+                className="mt-3 max-w-2xl text-base leading-7 text-slate-600 dark:text-gray-400 prose dark:prose-invert"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    course.description || "Work through this course one lecture at a time.",
+                }}
+              />
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -460,6 +464,12 @@ function CourseDetail() {
                       ? "You are viewing this course as its instructor."
                     : "Enrollment unlocks lesson playback."}
                 </p>
+                {activeLecture?.description && (
+                  <div
+                    className="mt-4 prose dark:prose-invert max-w-none text-slate-600 dark:text-gray-400 text-sm"
+                    dangerouslySetInnerHTML={{ __html: activeLecture.description }}
+                  />
+                )}
                 {enrolled && resumeMessage && (
                   <p className="mt-2 text-sm font-semibold text-cyan-700 dark:text-cyan-500">
                     {resumeMessage}

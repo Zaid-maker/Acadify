@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import ReactQuill from "react-quill-new";
 import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,6 +20,11 @@ function InstructorDashboard() {
 
   const handleCourseChange = (e) => {
     setCourseForm({ ...courseForm, [e.target.name]: e.target.value });
+    setError("");
+  };
+
+  const handleDescriptionChange = (content) => {
+    setCourseForm((prev) => ({ ...prev, description: content }));
     setError("");
   };
 
@@ -104,15 +110,15 @@ function InstructorDashboard() {
             <span className="text-sm font-semibold text-slate-700 dark:text-gray-300">
               Description
             </span>
-            <textarea
-              name="description"
-              value={courseForm.description}
-              placeholder="What students will learn"
-              onChange={handleCourseChange}
-              required
-              rows={5}
-              className="mt-2 w-full resize-none rounded-md border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 px-4 py-3 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 dark:placeholder:text-gray-500 focus:border-cyan-500 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-cyan-100 dark:focus:ring-cyan-900/20"
-            />
+            <div className="mt-2 flex flex-col">
+              <ReactQuill
+                theme="snow"
+                value={courseForm.description}
+                onChange={handleDescriptionChange}
+                placeholder="What students will learn"
+                className="h-48 overflow-hidden rounded-md border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-sm text-slate-900 dark:text-white"
+              />
+            </div>
           </label>
 
           <label className="mt-4 block">

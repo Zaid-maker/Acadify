@@ -16,6 +16,10 @@ const lectureSchema = new mongoose.Schema({
             message: "Invalid video URL",
         },
     },
+    description: {
+        type: String,
+        default: "",
+    },
     order: Number,
 })
 
