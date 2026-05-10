@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import CountUp from "../components/CountUp";
 import { 
   BookOpen, 
   Users, 
@@ -129,19 +130,27 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-blue-600/10 opacity-50" />
         <div className="container mx-auto px-6 relative grid md:grid-cols-4 gap-12 text-center text-white">
           <div>
-            <div className="text-5xl font-black mb-2">{formatNumber(stats.students)}</div>
+            <div className="text-5xl font-black mb-2">
+              <CountUp end={stats.students} suffix="+" />
+            </div>
             <div className="text-blue-400 font-bold uppercase tracking-widest text-sm">Students</div>
           </div>
           <div>
-            <div className="text-5xl font-black mb-2">{formatNumber(stats.instructors)}</div>
+            <div className="text-5xl font-black mb-2">
+              <CountUp end={stats.instructors} suffix="+" />
+            </div>
             <div className="text-blue-400 font-bold uppercase tracking-widest text-sm">Instructors</div>
           </div>
           <div>
-            <div className="text-5xl font-black mb-2">{stats.satisfaction}%</div>
+            <div className="text-5xl font-black mb-2">
+              <CountUp end={stats.satisfaction} suffix="%" />
+            </div>
             <div className="text-blue-400 font-bold uppercase tracking-widest text-sm">Satisfaction</div>
           </div>
           <div>
-            <div className="text-5xl font-black mb-2">{formatNumber(stats.courses)}</div>
+            <div className="text-5xl font-black mb-2">
+              <CountUp end={stats.courses} suffix="+" />
+            </div>
             <div className="text-blue-400 font-bold uppercase tracking-widest text-sm">Courses</div>
           </div>
         </div>
