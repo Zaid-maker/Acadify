@@ -10,6 +10,7 @@ import CourseBuilder from "./pages/CourseBuilder";
 import StudentDashboard from "./pages/StudentDashboard";
 import InstructorAnalytics from "./pages/InstructorAnalytics";
 import InstructorLiveManager from "./pages/InstructorLiveManager";
+import InstructorStudents from "./pages/InstructorStudents";
 import ForgotPassword from "./pages/ForgotPassword";
 import AdminModerationLogs from "./pages/AdminModerationLogs";
 import Navbar from "./components/Navbar";
@@ -66,6 +67,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["instructor", "admin"]}>
             <InstructorAnalytics />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/instructor/students"
+        element={
+          <ProtectedRoute allowedRoles={["instructor", "admin"]}>
+            <InstructorStudents />
           </ProtectedRoute>
         }
       />

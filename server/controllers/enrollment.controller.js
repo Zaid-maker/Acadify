@@ -136,3 +136,45 @@ export const checkEnrollment = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getInstructorStudents = async (req, res) => {
+    try {
+        const instructorId = req.user._id;
+
+        // Find all courses taught by this instructor
+        const courses = await Course.find({ instructor: instructorId }).select("_id title");
+        const courseIds = courses.map(c => c._id);
+
+        // Find all unique students enrolled in these courses
+        const enrollments = await Enrollment.find({ course: { $in: courseIds } })
+            .populate("user", "name email")
+            .populate("course", "title");
+
+        // Format for frontend: student profile + list of courses they are taking from this instructor
+        const studentMap = {};
+
+        enrollments.forEach(enr => {
+            if (!enr.user) return;
+            const studentId = enr.user._id.toString();
+            
+            if (!studentMap[studentId]) {
+                studentMap[studentId] = {
+                    _id: studentId,
+                    name: enr.user.name,
+                    email: enr.user.email,
+                    enrolledCourses: []
+                };
+            }
+            
+            studentMap[studentId].enrolledCourses.push({
+                _id: enr.course._id,
+                title: enr.course.title,
+                enrolledAt: enr.createdAt
+            });
+        });
+
+        res.json(Object.values(studentMap));
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
