@@ -75,7 +75,17 @@ export const getLiveSession = async (req, res) => {
         }
 
         const session = await LiveSession.findOne({ course: courseId, status: 'live' })
-            .populate('instructor', 'name');
+            .populate('instructor', 'name')
+            .populate('participants.user', 'name email avatar');
+        
+        // If student is joining, track them in participants if not already there
+        if (session && !isInstructor && !isAdmin) {
+            const alreadyIn = session.participants.some(p => p.user._id.toString() === userId.toString());
+            if (!alreadyIn) {
+                session.participants.push({ user: userId });
+                await session.save();
+            }
+        }
         
         res.json(session || null);
     } catch (error) {

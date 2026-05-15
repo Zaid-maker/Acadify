@@ -31,7 +31,17 @@ const liveSessionSchema = new mongoose.Schema({
     },
     endTime: {
         type: Date
-    }
+    },
+    participants: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        joinedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
 }, { timestamps: true });
 
 export default mongoose.model('LiveSession', liveSessionSchema);

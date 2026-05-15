@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Video, Users, Clock, AlertCircle, ExternalLink, StopCircle, Play } from "lucide-react";
+import { Video, Users, Clock, AlertCircle, ExternalLink, StopCircle, Play, User, Mail, ChevronDown, ChevronUp } from "lucide-react";
 import axios from "../api/axios";
 
 function InstructorLiveManager() {
@@ -8,6 +8,7 @@ function InstructorLiveManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
+  const [expandedParticipants, setExpandedParticipants] = useState({});
 
   useEffect(() => {
     fetchData();
@@ -40,6 +41,13 @@ function InstructorLiveManager() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleParticipants = (courseId) => {
+    setExpandedParticipants(prev => ({
+      ...prev,
+      [courseId]: !prev[courseId]
+    }));
   };
 
   const handleGoLive = async (course) => {
@@ -157,8 +165,53 @@ function InstructorLiveManager() {
                   <div className="mt-auto flex flex-col gap-3">
                     {isLive ? (
                       <>
+                        {/* Participant List Section */}
+                        <div className="mb-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+                          <button 
+                            onClick={() => toggleParticipants(course._id)}
+                            className="w-full flex items-center justify-between p-4 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/80 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4 text-cyan-600" />
+                              <span>Joined Participants ({liveSessions[course._id].participants?.length || 0})</span>
+                            </div>
+                            {expandedParticipants[course._id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                          </button>
+                          
+                          {expandedParticipants[course._id] && (
+                            <div className="p-2 pt-0 max-h-48 overflow-y-auto border-t border-gray-100 dark:border-gray-700/50">
+                              {liveSessions[course._id].participants?.length > 0 ? (
+                                <div className="space-y-1">
+                                  {liveSessions[course._id].participants.map((p, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 p-2 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
+                                      {p.user.avatar ? (
+                                        <img src={p.user.avatar} className="w-7 h-7 rounded-full object-cover" alt="" />
+                                      ) : (
+                                        <div className="w-7 h-7 rounded-full bg-cyan-100 dark:bg-cyan-950 flex items-center justify-center">
+                                          <User className="w-3.5 h-3.5 text-cyan-600" />
+                                        </div>
+                                      )}
+                                      <div className="flex flex-col min-w-0">
+                                        <span className="text-xs font-bold text-gray-900 dark:text-white truncate">{p.user.name}</span>
+                                        <span className="text-[10px] text-gray-500 truncate flex items-center gap-1">
+                                          <Mail className="w-2.5 h-2.5" />
+                                          {p.user.email}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="py-4 text-center">
+                                  <p className="text-xs text-gray-500 italic">No students joined yet</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         <button
-                          onClick={() => window.open(`https://meet.jit.si/${liveSessions[course._id].roomName}`, "_blank")}
+                          onClick={() => window.open(`https://meet.jit.si/${liveSessions[course._id].roomName}#config.prejoinPageEnabled=true&config.lobby.enabled=true`, "_blank")}
                           disabled={isLoading}
                           className="flex items-center justify-center gap-2 w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-4 rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-cyan-600/20"
                         >

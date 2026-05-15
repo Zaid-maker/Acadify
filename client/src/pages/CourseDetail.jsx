@@ -387,7 +387,11 @@ function CourseDetail() {
               <p className="text-sm font-bold">A live session is currently active for this course!</p>
             </div>
             <button
-              onClick={() => window.open(`https://meet.jit.si/${activeLiveSession.roomName}`, "_blank")}
+              onClick={() => {
+                window.open(`https://meet.jit.si/${activeLiveSession.roomName}#config.prejoinPageEnabled=true`, "_blank");
+                // Refresh to trigger participant tracking on backend
+                axios.get(`/live-sessions/course/${id}`).then(res => setActiveLiveSession(res.data));
+              }}
               className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-cyan-600 transition hover:bg-cyan-50"
             >
               Join Now
