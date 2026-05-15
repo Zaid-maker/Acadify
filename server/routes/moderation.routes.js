@@ -4,10 +4,55 @@ import { getModerationLogs, updateUserStatus } from '../controllers/moderation.c
 
 const router = express.Router();
 
-// GET /api/moderation?courseId=...  (admin or instructor for their course)
+/**
+ * @swagger
+ * /api/moderation:
+ *   get:
+ *     summary: Get moderation logs
+ *     description: Accessible by admin or course instructor
+ *     tags: [Moderation]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: courseId
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of moderation events
+ */
 router.get('/', protect, getModerationLogs);
 
-// PATCH /api/moderation/user/:userId - Update user status (shadow ban, flag)
+/**
+ * @swagger
+ * /api/moderation/user/{userId}:
+ *   patch:
+ *     summary: Update user status (flag/ban)
+ *     tags: [Moderation]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [active, flagged, shadowed]
+ *     responses:
+ *       200:
+ *         description: User status updated
+ */
 router.patch('/user/:userId', protect, updateUserStatus);
 
 export default router;

@@ -7,6 +7,7 @@
   "description": "LMS platform with course management, lectures, and student progress tracking",
   "private": true,
   "scripts": {
+    "docs": "echo 'Visit http://localhost:5000/api-docs after starting the server'",
     "dev": "concurrently --names \"SERVER,CLIENT\" --prefix \"[{name}]\" --prefix-colors \"blue,cyan\" \"cd server && bun run dev\" \"cd client && bun run dev\"",
     "dev:server": "cd server && bun run dev",
     "dev:client": "cd client && bun run dev",

@@ -5,6 +5,16 @@ import Lecture from "../models/Lecture.js";
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/stats/public:
+ *   get:
+ *     summary: Get public platform statistics
+ *     tags: [Statistics]
+ *     responses:
+ *       200:
+ *         description: Global count of students, instructors, and courses
+ */
 router.get("/public", async (req, res) => {
   try {
     const [studentsCount, instructorsCount, coursesCount, lecturesCount] = await Promise.all([

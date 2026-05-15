@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { setupSwagger } from "./config/swagger.js";
 
 // Routes imports
 import courseRoutes from "./routes/course.routes.js";
@@ -28,6 +29,9 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Setup Swagger
+setupSwagger(app);
 
 // Routes
 app.use("/api/stats", statsRoutes);
