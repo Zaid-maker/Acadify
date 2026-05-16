@@ -15,6 +15,7 @@ import InstructorStudents from "./pages/InstructorStudents";
 import ForgotPassword from "./pages/ForgotPassword";
 import AdminModerationLogs from "./pages/AdminModerationLogs";
 import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/profile/:id" element={<PublicProfile />} />
       <Route
         path="/dashboard"
         element={

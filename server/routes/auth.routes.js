@@ -1,6 +1,6 @@
 import express from "express";
-import { register, login, logout, me, updateProfile } from "../controllers/auth.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
+import { register, login, logout, me, updateProfile, getUserProfile } from "../controllers/auth.controller.js";
+import { protect, optionalAuth } from "../middleware/auth.middleware.js";
 import { authLimiter } from "../middleware/rateLimit.middleware.js";
 
 const router = express.Router();
@@ -123,5 +123,6 @@ router.get("/me", protect, me);
  *         description: Profile updated
  */
 router.patch("/profile", protect, updateProfile);
+router.get("/profile/:id", optionalAuth, getUserProfile);
 
 export default router;

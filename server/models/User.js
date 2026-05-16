@@ -14,12 +14,17 @@ const userSchema = new mongoose.Schema({
     bio: { type: String, default: "" },
     headline: { type: String, default: "" },
     website: { type: String, default: "" },
+    phone: { type: String, default: "" },
     socialLinks: {
         twitter: { type: String, default: "" },
         linkedin: { type: String, default: "" },
         github: { type: String, default: "" },
     },
-  isShadowBanned: {
+    isPublic: {
+        type: Boolean,
+        default: true,
+    },
+    isShadowBanned: {
     type: Boolean,
     default: false,
   },

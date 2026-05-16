@@ -81,10 +81,12 @@ export const me = (req, res) => {
         email: req.user.email,
         role: req.user.role,
         avatar: req.user.avatar,
+        phone: req.user.phone,
         bio: req.user.bio,
         headline: req.user.headline,
         website: req.user.website,
         socialLinks: req.user.socialLinks,
+        isPublic: req.user.isPublic,
         isShadowBanned: req.user.isShadowBanned,
         isFlagged: req.user.isFlagged,
     });
@@ -92,10 +94,12 @@ export const me = (req, res) => {
 
 export const updateProfile = async (req, res) => {
     try {
-        const { name, avatar, bio, headline, website, socialLinks } = req.body;
+        const { name, avatar, bio, headline, website, socialLinks, isPublic, phone } = req.body;
         const user = await User.findById(req.user._id);
 
         if (name) user.name = name.trim();
+        if (isPublic !== undefined) user.isPublic = !!isPublic;
+        if (phone !== undefined) user.phone = phone.trim().substring(0, 20);
         
         // Basic sanitization for Avatar URL
         if (avatar !== undefined) {
@@ -130,13 +134,39 @@ export const updateProfile = async (req, res) => {
             email: user.email,
             role: user.role,
             avatar: user.avatar,
+            phone: user.phone,
             bio: user.bio,
             headline: user.headline,
             website: user.website,
             socialLinks: user.socialLinks,
+            isPublic: user.isPublic,
             isShadowBanned: user.isShadowBanned,
             isFlagged: user.isFlagged,
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select("-password -email -integrations");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check privacy
+        if (!user.isPublic) {
+            const isSelf = req.user?._id?.toString() === user._id.toString();
+            const isStaff = req.user?.role === 'admin' || req.user?.role === 'instructor';
+            
+            if (!isSelf && !isStaff) {
+                return res.status(403).json({ message: "This profile is private" });
+            }
+        }
+
+        res.json(user);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

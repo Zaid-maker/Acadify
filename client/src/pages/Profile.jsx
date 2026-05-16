@@ -2,18 +2,22 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
-import { User, Mail, Globe, Camera, Check } from "lucide-react";
+import { User, Mail, Globe, Camera, Check, Shield, ShieldOff, Copy, ExternalLink, Phone } from "lucide-react";
 import { FaGithub, FaLinkedin, FaXTwitter } from "react-icons/fa6";
 
 export default function Profile() {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
+  const profileUrl = `${window.location.origin}/profile/${user?._id}`;
+
   const [form, setForm] = useState({
     name: user?.name || "",
     headline: user?.headline || "",
     bio: user?.bio || "",
     website: user?.website || "",
+    phone: user?.phone || "",
     avatar: user?.avatar || "",
+    isPublic: user?.isPublic ?? true,
     socialLinks: {
       twitter: user?.socialLinks?.twitter || "",
       linkedin: user?.socialLinks?.linkedin || "",
@@ -21,8 +25,13 @@ export default function Profile() {
     },
   });
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(profileUrl);
+    toast.success("Profile URL copied!");
+  };
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     if (name.startsWith("social.")) {
       const field = name.split(".")[1];
       setForm((prev) => ({
@@ -30,7 +39,10 @@ export default function Profile() {
         socialLinks: { ...prev.socialLinks, [field]: value },
       }));
     } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ 
+        ...prev, 
+        [name]: type === 'checkbox' ? checked : value 
+      }));
     }
   };
 
@@ -97,6 +109,23 @@ export default function Profile() {
                       className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-5 py-3 text-sm outline-none transition focus:border-cyan-500 dark:text-white"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-gray-400">Phone Number (Optional)</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400">
+                        <Phone size={16} />
+                      </div>
+                      <input
+                        name="phone"
+                        type="tel"
+                        value={form.phone}
+                        onChange={handleChange}
+                        autoComplete="off"
+                        placeholder="+1 234 567 890"
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 pl-12 pr-5 py-3 text-sm outline-none transition focus:border-cyan-500 dark:text-white"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-gray-400">Avatar URL</label>
@@ -113,6 +142,63 @@ export default function Profile() {
           </section>
 
           <div className="grid lg:grid-cols-2 gap-8">
+            {/* Visibility & Settings */}
+            <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-sm lg:col-span-2">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-6">
+                <div className="flex items-center gap-4">
+                  <div className={`p-4 rounded-2xl ${form.isPublic ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>
+                    {form.isPublic ? <Shield size={24} /> : <ShieldOff size={24} />}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold dark:text-white">Profile Visibility</h2>
+                    <p className="text-sm text-slate-500 dark:text-gray-400">
+                      {form.isPublic 
+                        ? "Currently public. Other students can view your profile and social links." 
+                        : "Currently private. Your profile is only visible to you and instructors."}
+                    </p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    name="isPublic"
+                    checked={form.isPublic}
+                    onChange={handleChange}
+                    className="sr-only peer"
+                  />
+                  <div className="w-14 h-8 bg-slate-200 dark:bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500 shadow-inner group-active:scale-95 transition-transform"></div>
+                </label>
+              </div>
+
+              {form.isPublic && (
+                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-white/5">
+                  <label className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-gray-400 block mb-3">Your Public Profile Link</label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 px-4 py-3 rounded-2xl border border-slate-100 dark:border-white/5 text-sm font-medium text-slate-600 dark:text-slate-300 truncate">
+                      {profileUrl}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={copyToClipboard}
+                      className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-500 hover:text-blue-600 hover:border-blue-500 transition-all active:scale-95"
+                      title="Copy Link"
+                    >
+                      <Copy size={20} />
+                    </button>
+                    <a
+                      href={profileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-500 hover:text-cyan-600 hover:border-cyan-500 transition-all active:scale-95"
+                      title="View Profile"
+                    >
+                      <ExternalLink size={20} />
+                    </a>
+                  </div>
+                </div>
+              )}
+            </section>
+
             {/* Bio & Links */}
             <section className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-sm space-y-6">
               <h2 className="text-xl font-bold dark:text-white">About Me</h2>
