@@ -48,6 +48,12 @@ export const login = async (req, res) => {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
+        if (user.status === "blocked") {
+            return res.status(403).json({ 
+                message: "This account has been suspended for violating our terms of service." 
+            });
+        }
+
         const token = generateToken(user._id);
 
         res

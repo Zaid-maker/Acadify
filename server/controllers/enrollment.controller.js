@@ -6,6 +6,7 @@ import Lecture from "../models/Lecture.js";
 import User from "../models/User.js";
 import { createCalendarEvent } from "../services/googleCalendar.service.js";
 import { pushExternalNotification } from "../services/notification.service.js";
+import { trackIncident } from "../middleware/abuseDetection.middleware.js";
 
 export const getMyCourses = async (req, res) => {
     try {
@@ -81,6 +82,17 @@ export const enrollCourse = async (req, res) => {
 
         if (existing) {
             return res.status(400).json({ message: "Already enrolled" });
+        }
+
+        // Abuse detection: Check rapid enrollment frequency
+        const recentEnrollmentsCount = await Enrollment.countDocuments({
+            user: userId,
+            createdAt: { $gt: new Date(Date.now() - 60 * 60 * 1000) } // Last 1 hour
+        });
+
+        if (recentEnrollmentsCount > 20) {
+            await trackIncident(userId, "mass_enrollment", { count: recentEnrollmentsCount, severity: "high" });
+            return res.status(429).json({ message: "Action blocked: Suspicious enrollment pattern detected." });
         }
 
         const enrollment = await Enrollment.create({

@@ -2,6 +2,7 @@ import Comment from "../models/Comment.js";
 import Course from "../models/Course.js";
 import ModerationLog from "../models/ModerationLog.js";
 import { createNotification } from "../services/notification.service.js";
+import { trackIncident } from "../middleware/abuseDetection.middleware.js";
 import mongoose from "mongoose";
 
 export const addComment = async (req, res) => {
@@ -11,6 +12,17 @@ export const addComment = async (req, res) => {
 
     if (!content || !content.trim()) {
       return res.status(400).json({ message: "Content is required" });
+    }
+
+    // Abuse detection: Check rapid commenting
+    const recentCommentsCount = await Comment.countDocuments({
+      user: userId,
+      createdAt: { $gt: new Date(Date.now() - 5 * 60 * 1000) } // Last 5 minutes
+    });
+
+    if (recentCommentsCount > 15) {
+      await trackIncident(userId, "comment_spam", { count: recentCommentsCount, severity: "medium" });
+      return res.status(429).json({ message: "You are posting comments too quickly. Please slow down." });
     }
 
     // Check if user is shadow banned
